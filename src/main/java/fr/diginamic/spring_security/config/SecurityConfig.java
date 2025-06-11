@@ -23,11 +23,10 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/annonce/get-all","/auth/create-candidat", "/auth/create-recruteur", "/auth/login").permitAll()
+                        .requestMatchers("/annonce/get-all","/auth/**", "/h2-console/**").permitAll()
                         .requestMatchers("/annonce/get-my-annonce-list").hasAnyRole("CANDIDAT", "RECRUTEUR")
                         .requestMatchers("/annonce/create").hasRole("RECRUTEUR")
                         .requestMatchers("/auth/create-admin", "/auth/delete-admin-by-id/**").hasAuthority("SUPER_ADMIN")
-                        .requestMatchers("/auth/create-user", "/h2-console/**").permitAll()
                         .anyRequest().authenticated()
                 )
 

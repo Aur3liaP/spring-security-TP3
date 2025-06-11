@@ -2,6 +2,8 @@ package fr.diginamic.spring_security.service;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
@@ -9,6 +11,7 @@ import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.stream.Stream;
 
 @Service
 public class JwtService {
@@ -21,6 +24,7 @@ public class JwtService {
 
     public JwtService(@Value("${jwt.secret}") String SECRET, @Value("${jwt.expiration}") long EXPIRATION_TIME, @Value("${auth.cookie.name}") String COOKIE_NAME, @Value("${auth.cookie.expiration}") int COOKIE_MAX_AGE) {
         this.SECRET = SECRET;
+        System.out.println("Secret Key: " + SECRET);
         this.key = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
         this.EXPIRATION_TIME = EXPIRATION_TIME;
         this.COOKIE_NAME = COOKIE_NAME;
@@ -76,10 +80,33 @@ public class JwtService {
         }
     }
 
-    public String getEmailFromToken(String token) {
-        return parseToken(token).getSubject();
+    public String getSubject(String token) {
+        return Jwts
+                .parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getSubject();
+    };
+
+
+    public String getEmailFromToken(HttpServletRequest request) throws Exception {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+
+            String token = Stream.of(cookies)
+                    .filter(cookie -> cookie.getName().equals(COOKIE_NAME))
+                    .map(Cookie::getValue)
+                    .findFirst()
+                    .orElse(null);
+
+            if (token != null) {
+                return getSubject(token);
+
+            }
+        }
+        throw new Exception("Nothing found with cookie");
     }
-
-
 
 }

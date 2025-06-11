@@ -5,13 +5,16 @@ import fr.diginamic.spring_security.entity.Role;
 import fr.diginamic.spring_security.entity.UserApp;
 import fr.diginamic.spring_security.repository.UserAppRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
 @Service
-public class UserAppService {
+public class UserAppService implements UserDetailsService {
 
     @Autowired
     private UserAppRepository userAppRepository;
@@ -55,5 +58,13 @@ public class UserAppService {
 
     public void deleteUserAppById(Integer id) {
         userAppRepository.deleteById(id);
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        System.out.println(email);
+        UserApp user = userAppRepository.findByEmail(email.trim().toLowerCase())
+                .orElseThrow(() -> new UsernameNotFoundException("JWT invalide ou utilisateur inexistant (peut être normal à l'inscription) :" + email));
+        return new UserAppDetailsService(user);
     }
 }
